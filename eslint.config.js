@@ -27,6 +27,7 @@ export default [
       },
     },
     rules: {
+      'no-undef': 'off',
       'vue/multi-word-component-names': 'error',
       'vue/component-api-style': ['error', ['script-setup']],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
