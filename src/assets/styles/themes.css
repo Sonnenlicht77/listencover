@@ -1,0 +1,21 @@
+body.theme-night {
+  --bg: #16181d;
+  --panel: #1d2027;
+  --fg: #c8ccd3;
+  --muted: #777d88;
+  --line: #2b2f38;
+  --accent: #7aaeff;
+  --hl: #3d3a1a;
+  --btn: #252932;
+}
+
+body.theme-sepia {
+  --bg: #f6eed9;
+  --panel: #fbf6e9;
+  --fg: #4a3f2c;
+  --muted: #8a7b60;
+  --line: #e3d7bb;
+  --accent: #8a6b3a;
+  --hl: #f2dda6;
+  --btn: #efe4c9;
+}
