@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>listenCover · 低保真原型 v5.1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #ededed; color: #222; padding: 28px 24px 80px;
+    line-height: 1.55; font-size: 14px;
+  }
+  .page-head {
+    max-width: 1180px; margin: 0 auto 24px;
+    background: #fff; border: 2px solid #222; border-radius: 10px; padding: 20px 24px;
+  }
+  .page-head h1 { font-size: 20px; margin-bottom: 6px; }
+  .page-head .sub { color: #777; font-size: 12.5px; margin-bottom: 14px; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    font-size: 12px; color: #555; padding-top: 12px; border-top: 1px dashed #ccc;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 14px; height: 14px; display: inline-block; border: 1.5px solid #555; }
+  .legend i.gray { background: #e0e0e0; border-color: #999; }
+  .legend i.dashed { border-style: dashed; }
+  .legend i.alert { background: #f4f4f4; border-color: #222; }
+  .legend i.locked { background: #fafafa; border-color: #ddd; border-style: dashed; }
+
+  .stage { max-width: 1180px; margin: 0 auto 36px; }
+  .stage-head {
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 10px 0 12px; border-bottom: 2px solid #222; margin-bottom: 20px;
+  }
+  .stage-head .num {
+    background: #222; color: #fff; font-size: 12px; font-weight: 700;
+    padding: 3px 10px; border-radius: 4px; letter-spacing: .5px;
+  }
+  .stage-head h2 { font-size: 16px; }
+  .stage-head .note { color: #777; font-size: 12.5px; margin-left: auto; }
+
+  .screens { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+  .screen { flex: 0 0 auto; width: 320px; }
+  .screen.wide { width: 480px; }
+  .screen.full { width: 100%; max-width: 760px; }
+  .screen-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .screen-id {
+    background: #222; color: #fff; font-size: 11px; font-weight: 700;
+    padding: 2px 7px; border-radius: 3px; letter-spacing: .5px;
+  }
+  .screen-name { font-size: 13px; font-weight: 700; }
+  .screen-tag {
+    font-size: 10.5px; border: 1px solid #999; border-radius: 8px;
+    padding: 1px 7px; color: #666; margin-left: auto;
+  }
+  .screen-tag.p0 { border-color: #222; color: #222; font-weight: 600; }
+  .screen-tag.p1 { border-color: #888; color: #666; }
+  .screen-tag.p2 { border-color: #bbb; color: #999; }
+  .screen-tag.new { border-color: #222; background: #222; color: #fff; font-weight: 600; }
+
+  .frame { background: #fff; border: 2px solid #222; border-radius: 8px; overflow: hidden; }
+  .frame.dashed { border-style: dashed; }
+  .frame.locked { border-style: dashed; border-color: #ccc; }
+  .frame-bar {
+    background: #222; color: #fff; font-size: 11px; padding: 5px 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .frame-bar .dots { display: flex; gap: 3px; }
+  .frame-bar .dots i { width: 7px; height: 7px; border-radius: 50%; background: #888; display: block; }
+  .frame-bar .url { margin-left: 8px; font-size: 10.5px; opacity: .75; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .frame-body { padding: 14px; }
+
+  .ph { background: #e0e0e0; border-radius: 2px; height: 9px; }
+  .ph.sm { height: 7px; } .ph.lg { height: 13px; } .ph.dark { background: #c8c8c8; }
+  .ph.w20 { width: 20%; } .ph.w30 { width: 30%; } .ph.w40 { width: 40%; } .ph.w50 { width: 50%; }
+  .ph.w60 { width: 60%; } .ph.w70 { width: 70%; } .ph.w80 { width: 80%; } .ph.w90 { width: 90%; } .ph.w100 { width: 100%; }
+
+  .row { display: flex; align-items: center; gap: 8px; }
+  .row + .row { margin-top: 8px; }
+  .col { display: flex; flex-direction: column; gap: 8px; }
+  .spacer { flex: 1; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1.5px solid #222; border-radius: 5px;
+    padding: 5px 12px; font-size: 12px; background: #fff;
+    min-width: 40px; white-space: nowrap; color: #222;
+  }
+  .btn.solid { background: #222; color: #fff; }
+  .btn.lg { padding: 9px 18px; font-size: 13px; }
+  .btn.block { width: 100%; }
+  .btn.disabled { border-color: #bbb; color: #bbb; background: #f7f7f7; cursor: not-allowed; }
+  .btn.sm { padding: 3px 9px; font-size: 11px; min-width: 32px; }
+
+  .chip {
+    display: inline-block; border: 1px solid #888; border-radius: 10px;
+    padding: 1px 9px; font-size: 11px; color: #555; background: #fff;
+  }
+  .chip.on { background: #222; color: #fff; border-color: #222; }
+  .chip.locked { border-style: dashed; border-color: #bbb; color: #999; }
+
+  .box { border: 1.5px solid #222; border-radius: 6px; padding: 10px 12px; background: #fff; }
+  .box.dashed { border-style: dashed; }
+  .box.gray { background: #f4f4f4; border-color: #999; }
+  .box.alert { background: #f7f7f7; border-color: #222; border-width: 2px; }
+  .box.locked { background: #fafafa; border-color: #ddd; border-style: dashed; color: #999; }
+
+  .input-line {
+    border: 1.5px solid #222; border-radius: 5px;
+    padding: 6px 10px; font-size: 12px; color: #999; background: #fff;
+    display: flex; align-items: center;
+  }
+
+  .divider { border-top: 1px solid #ddd; margin: 12px 0; }
+  .label { font-size: 11.5px; color: #777; }
+  .text-strong { font-size: 12.5px; font-weight: 700; color: #222; }
+  .text-sm { font-size: 11.5px; color: #666; }
+  .text-xs { font-size: 10.5px; color: #999; }
+
+  .player-center { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 18px 10px 12px; }
+  .play-btn {
+    width: 58px; height: 58px; border-radius: 50%;
+    border: 2px solid #222; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; color: #222; background: #fff;
+  }
+  .progress { flex: 1; height: 5px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
+  .progress i { display: block; height: 100%; background: #222; }
+
+  table.lofi { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  table.lofi th, table.lofi td { border: 1px solid #ccc; padding: 4px 6px; text-align: left; }
+  table.lofi th { background: #f0f0f0; font-weight: 600; color: #444; }
+  table.lofi td { color: #555; }
+
+  .meta {
+    margin-top: 10px; padding: 9px 11px;
+    background: #fff; border: 1.5px solid #222; border-radius: 6px;
+    font-size: 11.5px; line-height: 1.7;
+  }
+  .meta .line { display: flex; gap: 6px; }
+  .meta .line + .line { margin-top: 3px; }
+  .meta .k { color: #888; flex: 0 0 52px; }
+  .meta .v { color: #222; flex: 1; }
+  .meta .v b { font-weight: 700; }
+  .meta .todo {
+    display: inline-block; border: 1px dashed #666; border-radius: 8px;
+    padding: 0 7px; font-size: 10.5px; color: #555; background: #fafafa;
+    margin-left: 4px;
+  }
+
+  .spinner {
+    width: 30px; height: 30px; border: 3px solid #ddd;
+    border-top-color: #222; border-radius: 50%; margin: 0 auto;
+  }
+
+  .drag-overlay {
+    min-height: 160px; display: flex; align-items: center; justify-content: center;
+    background: #f0f0f0; border: 2px dashed #555;
+    color: #333; font-size: 13px; font-weight: 600; text-align: center;
+  }
+
+  .lang-toggle {
+    display: flex; gap: 4px; border: 1.5px solid #222; border-radius: 8px;
+    padding: 2px; background: #fff;
+  }
+  .lang-toggle span {
+    padding: 3px 10px; font-size: 11.5px; border-radius: 5px; color: #555;
+  }
+  .lang-toggle span.on { background: #222; color: #fff; }
+
+  @media (max-width: 640px) {
+    body { padding: 18px 12px 60px; }
+    .screen, .screen.wide { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>listenCover · 低保真原型 v5.1</h1>
+  <p class="sub">
+    基于 PRD v5.1。国际化范围收窄为<strong>中英双语</strong>，不做日韩等其他语言。
+    TTS 保底层已实现，增强层和备选层仅留接口（UI 显示为「即将推出」）。
+  </p>
+  <div class="legend">
+    <span><i class="gray"></i>内容占位</span>
+    <span><i></i>可交互元素</span>
+    <span><i class="dashed"></i>可选 / 预留 / 待确认</span>
+    <span><i class="locked"></i>锁定 / 即将推出</span>
+    <span><i class="alert"></i>警示 / 异常状态</span>
+    <span><b>P0</b> 必须 · <b>P1</b> 迭代一 · <b>P2</b> 迭代二</span>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 阶段 0 · 首次打开与引导 -->
+<!-- ============================================================ -->
+<div class="stage">
+  <div class="stage-head">
+    <span class="num">阶段 0</span>
+    <h2>首次打开与引导</h2>
+    <span class="note">第一次访问，空状态到开始体验</span>
+  </div>
+
+  <div class="screens">
+
+    <!-- S00 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S00</span>
+        <span class="screen-name">首次打开 · 空状态</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; text-align:center; padding:10px 4px;">
+            <div class="row" style="justify-content:flex-end;">
+              <div class="lang-toggle">
+                <span class="on">中</span>
+                <span>EN</span>
+              </div>
+            </div>
+            <div class="text-strong" style="font-size:15px;">🎧 listenCover</div>
+            <div class="text-sm">导入本地文档，戴上耳机就能听</div>
+            <div class="divider"></div>
+            <div class="box dashed" style="text-align:left;">
+              <div class="text-strong" style="margin-bottom:6px;">核心功能</div>
+              <div class="text-xs" style="line-height:1.9;">
+                · 本地处理，不上传服务器<br>
+                · 一键切换到伪装界面<br>
+                · 中英双语支持
+              </div>
+            </div>
+            <div class="btn solid lg block">上传第一个文档</div>
+            <div class="btn lg block">体验示例文档</div>
+            <div class="text-xs" style="margin-top:4px;">支持 TXT · MD · EPUB · HTML · FB2</div>
+            <div class="text-xs" style="color:#999;">推荐使用 Chrome / Edge 90+</div>
+            <div class="divider"></div>
+            <div class="text-xs">
+              <span class="chip">浏览器兼容性</span>
+              <span class="chip">免责声明</span>
+              <span class="chip">隐私政策</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">用户首次访问站点</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">① 上传第一个文档 ② 体验示例文档 ③ 中英切换 ④ 查看底部链接</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">① → S10；② → S01；③ → 页面文案即时切换；④ → S80</span></div>
+        <div class="line"><span class="k">新增</span><span class="v">右上角语言切换（中 / EN）<span class="todo">P1</span></span></div>
+      </div>
+    </div>
+
+    <!-- S00-EN -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S00-EN</span>
+        <span class="screen-name">首次打开 · 英文版</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · en</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; text-align:center; padding:10px 4px;">
+            <div class="row" style="justify-content:flex-end;">
+              <div class="lang-toggle">
+                <span>中</span>
+                <span class="on">EN</span>
+              </div>
+            </div>
+            <div class="text-strong" style="font-size:15px;">🎧 listenCover</div>
+            <div class="text-sm">Upload a local document and listen with headphones</div>
+            <div class="divider"></div>
+            <div class="box dashed" style="text-align:left;">
+              <div class="text-strong" style="margin-bottom:6px;">Features</div>
+              <div class="text-xs" style="line-height:1.9;">
+                · Processed locally, never uploaded<br>
+                · One-key switch to disguise mode<br>
+                · Chinese + English support
+              </div>
+            </div>
+            <div class="btn solid lg block">Upload first document</div>
+            <div class="btn lg block">Try sample document</div>
+            <div class="text-xs" style="margin-top:4px;">Supports TXT · MD · EPUB · HTML · FB2</div>
+            <div class="text-xs" style="color:#999;">Chrome / Edge 90+ recommended</div>
+            <div class="divider"></div>
+            <div class="text-xs">
+              <span class="chip">Compatibility</span>
+              <span class="chip">Disclaimer</span>
+              <span class="chip">Privacy</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">用户切换语言为英文</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">同 S00，文案为英文</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">同 S00</span></div>
+        <div class="line"><span class="k">语言检测</span><span class="v">优先 localStorage.lang > 浏览器语言 > 默认中文</span></div>
+      </div>
+    </div>
+
+    <!-- S01 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S01</span>
+        <span class="screen-name">示例文档加载中</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 加载示例</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:14px; text-align:center; padding:30px 10px;">
+            <div class="spinner"></div>
+            <div class="text-strong">正在准备示例文档…</div>
+            <div class="text-sm">《小王子》片段 · 约 3,000 字</div>
+            <div class="progress" style="margin-top:6px;"><i style="width:55%"></i></div>
+            <div class="text-xs">本地解析，不上传任何内容</div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">点击「体验示例文档」</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">等待加载完成</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">完成 → S20 播放器</span></div>
+        <div class="line"><span class="k">语言</span><span class="v">示例文档含中英两版，根据 UI 语言选择</span></div>
+      </div>
+    </div>
+
+    <!-- S02 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S02</span>
+        <span class="screen-name">首次功能引导</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 引导</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; padding:8px 4px;">
+            <div class="text-strong">小提示</div>
+            <div class="box dashed">
+              <div class="text-sm" style="margin-bottom:6px;">首次按伪装键时，会提示：</div>
+              <div class="text-strong" style="font-size:12px;">「已切换伪装，再按一次返回」</div>
+              <div class="text-xs" style="margin-top:6px;">默认伪装键：~（可在设置中修改）</div>
+            </div>
+            <div class="row" style="justify-content:space-between;">
+              <span class="chip">不再提示</span>
+              <span class="btn sm solid">知道了</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">首次触发关键功能时</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">点击「知道了」关闭；勾选不再提示</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">关闭提示，留在当前页</span></div>
+        <div class="line"><span class="k">语言</span><span class="v">提示文案随 UI 语言变化</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 阶段 1 · 导入文档 -->
+<!-- ============================================================ -->
+<div class="stage">
+  <div class="stage-head">
+    <span class="num">阶段 1</span>
+    <h2>导入文档</h2>
+    <span class="note">点击或拖拽上传，无粘贴文本</span>
+  </div>
+
+  <div class="screens">
+
+    <!-- S10 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S10</span>
+        <span class="screen-name">导入选择</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 导入</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px;">
+            <div class="row">
+              <span class="text-strong">导入文档</span>
+              <span class="spacer"></span>
+              <span class="btn sm">✕</span>
+            </div>
+            <div class="box dashed" style="text-align:center; padding:22px 12px;">
+              <div class="text-sm" style="margin-bottom:8px;">点击下方按钮选择文件</div>
+              <div class="btn solid">选择文件</div>
+              <div class="text-xs" style="margin-top:8px;">TXT · MD · EPUB · HTML · FB2</div>
+            </div>
+            <div class="divider"></div>
+            <div class="box gray">
+              <div class="text-xs">
+                <b>文件大小限制：</b><br>
+                TXT / MD：推荐 5MB，最大 10MB<br>
+                EPUB：最大 30MB，正文 ≤ 10MB<br>
+                段落数上限：5 万段
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">点击「上传第一个文档」或工具栏「导入」</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">① 点击「选择文件」打开系统选择器 ② 点击「✕」关闭</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">① → S12 解析中；② → 返回上一页</span></div>
+        <div class="line"><span class="k">语言</span><span class="v">界面文案随 UI 语言变化</span></div>
+      </div>
+    </div>
+
+    <!-- S11 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S11</span>
+        <span class="screen-name">拖拽中 · 全屏遮罩</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 拖拽</span></div>
+        <div class="frame-body" style="padding:0;">
+          <div class="row" style="padding:8px 12px; border-bottom:1.5px solid #222; background:#fafafa;">
+            <span class="text-strong" style="font-size:12px;">我的文档</span>
+            <span class="spacer"></span>
+            <span class="btn sm solid">＋ 添加</span>
+          </div>
+          <div style="padding:12px; opacity:.35;">
+            <div class="row"><span class="ph w60"></span></div>
+            <div class="row"><span class="ph w80"></span></div>
+            <div class="row"><span class="ph w40"></span></div>
+          </div>
+          <div class="drag-overlay">松开鼠标，添加到文档列表</div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">将文件拖入页面</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">松开完成，或拖出取消</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">松开 → S12；拖出 → 返回</span></div>
+      </div>
+    </div>
+
+    <!-- S12 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S12</span>
+        <span class="screen-name">解析中</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 解析</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; text-align:center; padding:24px 10px;">
+            <div class="spinner"></div>
+            <div class="text-strong">正在解析 2 / 3…</div>
+            <div class="text-sm">会议纪要_0910.txt · 2.3 MB</div>
+            <div class="progress" style="margin-top:4px;"><i style="width:66%"></i></div>
+            <div class="text-xs">流水线解析，边读边写入本地</div>
+            <div class="text-xs" style="color:#999;">解析在本机进行，不会上传任何内容</div>
+            <div class="btn sm" style="margin-top:6px;">取消</div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">文件读取中，流水线解析</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">等待完成；或点击「取消」中止</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">成功 → S13；失败 → S14；取消 → 返回</span></div>
+        <div class="line"><span class="k">待确认</span><span class="v">取消后已写入数据是否回滚 <span class="todo">待确认</span></span></div>
+      </div>
+    </div>
+
+    <!-- S13 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S13</span>
+        <span class="screen-name">解析成功 · 文档列表</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 我的文档</span></div>
+        <div class="frame-body" style="padding:0;">
+          <div class="row" style="padding:9px 12px; border-bottom:1.5px solid #222; background:#fafafa;">
+            <span class="text-strong" style="font-size:12px;">我的文档</span>
+            <span class="text-xs">共 3 本</span>
+            <span class="spacer"></span>
+            <span class="btn sm solid">＋ 添加</span>
+            <span class="btn sm">📖 返回阅读</span>
+          </div>
+          <div style="padding:12px;">
+            <div class="col" style="gap:10px;">
+              <div class="box" style="padding:10px;">
+                <div class="row">
+                  <div class="ph dark" style="width:32px; height:42px; border-radius:3px;"></div>
+                  <div class="col" style="gap:4px; flex:1;">
+                    <div class="text-strong" style="font-size:12px;">桃花源记</div>
+                    <div class="text-xs">TXT · 12 段 · 中文 · 已读 35%</div>
+                    <div class="progress"><i style="width:35%"></i></div>
+                  </div>
+                  <span class="btn sm">✕</span>
+                </div>
+              </div>
+              <div class="box" style="padding:10px;">
+                <div class="row">
+                  <div class="ph dark" style="width:32px; height:42px; border-radius:3px;"></div>
+                  <div class="col" style="gap:4px; flex:1;">
+                    <div class="text-strong" style="font-size:12px;">The Little Prince</div>
+                    <div class="text-xs">TXT · 64 段 · English · 已读 72%</div>
+                    <div class="progress"><i style="width:72%"></i></div>
+                  </div>
+                  <span class="btn sm">✕</span>
+                </div>
+              </div>
+              <div class="box" style="padding:10px; border-color:#bbb;">
+                <div class="row">
+                  <div class="ph dark" style="width:32px; height:42px; border-radius:3px;"></div>
+                  <div class="col" style="gap:4px; flex:1;">
+                    <div class="text-strong" style="font-size:12px;">产品需求说明</div>
+                    <div class="text-xs">EPUB · 89 段 · 中文 · 未开始</div>
+                    <div class="progress"><i style="width:0%"></i></div>
+                  </div>
+                  <span class="btn sm">✕</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">解析完成，自动跳转</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">① 点击卡片打开 ② 点击 ✕ 删除 ③ 点击＋添加 ④ 返回阅读</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">① → S20；② → S15；③ → S10；④ → S20</span></div>
+        <div class="line"><span class="k">新增</span><span class="v">每本书显示检测到的语言（中文 / English）</span></div>
+      </div>
+    </div>
+
+    <!-- S14 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S14</span>
+        <span class="screen-name">解析失败</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 导入失败</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; padding:10px 4px;">
+            <div class="box alert">
+              <div class="text-strong" style="margin-bottom:6px;">⚠ 导入失败</div>
+              <div class="text-sm" style="line-height:1.7;">文件：会议纪要_0910.txt<br>原因：文件超过 10MB 上限，解析可能卡顿。</div>
+            </div>
+            <div class="box gray">
+              <div class="text-xs" style="line-height:1.8;"><b>建议：</b><br>· 用文本编辑器拆分文件<br>· 或导出为纯文本 TXT 后再导入</div>
+            </div>
+            <div class="row" style="gap:8px;">
+              <span class="btn block">重新选择</span>
+              <span class="btn solid block">知道了</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">解析失败或超出限制</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">① 重新选择 → S10 ② 知道了 → 返回</span></div>
+        <div class="line"><span class="k">覆盖场景</span><span class="v">超大小、格式不支持、编码无法识别、内容为空、段落数超限</span></div>
+      </div>
+    </div>
+
+    <!-- S15 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S15</span>
+        <span class="screen-name">删除文档确认</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 删除确认</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; padding:16px 8px;">
+            <div class="text-strong" style="text-align:center;">确定删除？</div>
+            <div class="text-sm" style="text-align:center;">确定要从文档列表删除《会议纪要_0910》吗？<br>删除后无法恢复。</div>
+            <div class="row" style="gap:8px; margin-top:6px;">
+              <span class="btn block">取消</span>
+              <span class="btn solid block">删除</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">点击文档卡片上的 ✕</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">删除 / 取消</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">均返回 S13</span></div>
+      </div>
+    </div>
+
+    <!-- S16 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S16</span>
+        <span class="screen-name">编码手动选择（中英）</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 编码选择</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:10px;">
+            <div class="text-strong">请确认文件编码</div>
+            <div class="text-xs">自动检测置信度较低，请选择正确的编码：</div>
+            <div class="box dashed" style="font-size:11px; line-height:1.7; color:#666;">
+              前 500 字符预览：<br>"锟斤拷锟斤拷... 这段文字以乱码显示，说明编码可能不正确。"
+            </div>
+            <div class="col" style="gap:6px;">
+              <span class="chip on">UTF-8</span>
+              <span class="chip">GBK</span>
+              <span class="chip">Latin-1</span>
+            </div>
+            <div class="btn solid block">确认并继续</div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">置信度 &lt; 80% 时弹出</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">选择编码，确认</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">继续解析 → S12</span></div>
+        <div class="line"><span class="k">范围</span><span class="v">仅保留中英常用编码：UTF-8、GBK、Latin-1</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 阶段 2 · 听书播放 -->
+<!-- ============================================================ -->
+<div class="stage">
+  <div class="stage-head">
+    <span class="num">阶段 2</span>
+    <h2>听书播放</h2>
+    <span class="note">核心界面，默认进入播放器</span>
+  </div>
+
+  <div class="screens">
+
+    <!-- S20 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S20</span>
+        <span class="screen-name">播放器主界面</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 音频播放器</span></div>
+        <div class="frame-body" style="padding:0;">
+          <div class="row" style="padding:9px 12px; border-bottom:1.5px solid #222; background:#fafafa;">
+            <span class="btn sm">☰</span>
+            <span class="btn sm">📂</span>
+            <span class="btn sm">⚙</span>
+            <span class="spacer"></span>
+            <span class="btn sm">▣ 工作界面</span>
+          </div>
+          <div class="player-center">
+            <div class="text-strong" style="font-size:13px;">会议录音_0915.mp3</div>
+            <div class="text-xs">桃花源记 · 第 2 章</div>
+            <div class="play-btn">▶</div>
+            <div class="row" style="width:100%;">
+              <span class="text-xs">12:34</span>
+              <div class="progress"><i style="width:35%"></i></div>
+              <span class="text-xs">45:00</span>
+            </div>
+            <div class="row" style="gap:20px;">
+              <span class="btn">⏮</span>
+              <span class="btn">⏭</span>
+            </div>
+            <div class="row" style="gap:14px; font-size:11px; color:#666;">
+              <span>语速 1.0x</span>
+              <span>音色：中文女声</span>
+            </div>
+          </div>
+          <div class="row" style="padding:7px 12px; border-top:1.5px solid #222; background:#fafafa; font-size:10.5px; color:#666;">
+            <span>播放中</span>
+            <div class="progress"><i style="width:35%"></i></div>
+            <span>35%</span>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">打开文档后默认进入</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">空格播放/暂停；←→跳段；☰播放列表；📂导入；⚙设置；按 ~ 伪装</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">播放 → S21；☰ → S40；📂 → S10；⚙ → S60；~ → S30</span></div>
+        <div class="line"><span class="k">语言</span><span class="v">中文文档显示中文音色；英文文档自动匹配英文音色</span></div>
+      </div>
+    </div>
+
+    <!-- S20-EN -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S20-EN</span>
+        <span class="screen-name">播放器 · 英文文档</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · player</span></div>
+        <div class="frame-body" style="padding:0;">
+          <div class="row" style="padding:9px 12px; border-bottom:1.5px solid #222; background:#fafafa;">
+            <span class="btn sm">☰</span>
+            <span class="btn sm">📂</span>
+            <span class="btn sm">⚙</span>
+            <span class="spacer"></span>
+            <span class="btn sm">▣ Work Mode</span>
+          </div>
+          <div class="player-center">
+            <div class="text-strong" style="font-size:13px;">meeting_recording_0915.mp3</div>
+            <div class="text-xs">The Little Prince · Chapter 2</div>
+            <div class="play-btn">▶</div>
+            <div class="row" style="width:100%;">
+              <span class="text-xs">12:34</span>
+              <div class="progress"><i style="width:35%"></i></div>
+              <span class="text-xs">45:00</span>
+            </div>
+            <div class="row" style="gap:20px;">
+              <span class="btn">⏮</span>
+              <span class="btn">⏭</span>
+            </div>
+            <div class="row" style="gap:14px; font-size:11px; color:#666;">
+              <span>Speed 1.0x</span>
+              <span>Voice: English (US)</span>
+            </div>
+          </div>
+          <div class="row" style="padding:7px 12px; border-top:1.5px solid #222; background:#fafafa; font-size:10.5px; color:#666;">
+            <span>Playing</span>
+            <div class="progress"><i style="width:35%"></i></div>
+            <span>35%</span>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">英文文档打开后</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">同 S20，界面文案为英文</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">同 S20</span></div>
+        <div class="line"><span class="k">音色</span><span class="v">自动匹配英文音色（如 Google US English）</span></div>
+      </div>
+    </div>
+
+    <!-- S21 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S21</span>
+        <span class="screen-name">播放中 · 工具栏隐藏</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 播放中</span></div>
+        <div class="frame-body" style="padding:0;">
+          <div class="player-center" style="padding:42px 14px;">
+            <div class="text-strong" style="font-size:13px;">会议录音_0915.mp3</div>
+            <div class="text-xs">桃花源记 · 第 2 章</div>
+            <div class="play-btn">❚❚</div>
+            <div class="row" style="width:100%;">
+              <span class="text-xs">12:34</span>
+              <div class="progress"><i style="width:35%"></i></div>
+              <span class="text-xs">45:00</span>
+            </div>
+            <div class="row" style="gap:20px;">
+              <span class="btn">⏮</span>
+              <span class="btn">⏭</span>
+            </div>
+          </div>
+          <div style="padding:12px; text-align:center;">
+            <span class="text-xs" style="color:#999;">播放中 3.5 秒无操作，工具栏与状态栏已自动隐藏</span>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">播放中 3.5 秒无操作</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">移动鼠标或按键，工具栏恢复</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">操作 → S20；按 ~ → S30</span></div>
+      </div>
+    </div>
+
+    <!-- S22 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S22</span>
+        <span class="screen-name">无输出设备提示</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 设备检测</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; padding:10px 4px;">
+            <div class="box alert">
+              <div class="text-strong" style="margin-bottom:6px;">🎧 未检测到音频输出设备</div>
+              <div class="text-sm">请插入耳机或检查扬声器连接。</div>
+            </div>
+            <div class="row" style="justify-content:space-between;">
+              <span class="chip">不再提示</span>
+              <span class="btn sm solid">知道了</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">开始播放前检测无设备</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">知道了 / 不再提示</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">关闭，留在 S20</span></div>
+      </div>
+    </div>
+
+    <!-- S23 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S23</span>
+        <span class="screen-name">TTS 引擎不可用</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · TTS 不可用</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; padding:10px 4px;">
+            <div class="box alert">
+              <div class="text-strong" style="margin-bottom:6px;">🔇 语音合成不可用</div>
+              <div class="text-sm" style="line-height:1.7;">当前浏览器不支持语音合成。<br>播放功能已禁用。</div>
+            </div>
+            <div class="box gray">
+              <div class="text-xs" style="line-height:1.8;"><b>建议：</b><br>· 使用最新版 Chrome / Edge<br>· 或检查系统 TTS 设置</div>
+            </div>
+            <div class="row" style="gap:8px;">
+              <span class="btn block">查看兼容性</span>
+              <span class="btn solid block">知道了</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">点击播放但保底层不可用</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">查看兼容性 / 知道了</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">兼容性 → S80；知道了 → 返回 S20（播放置灰）</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 阶段 3 · 伪装与隐私 -->
+<!-- ============================================================ -->
+<div class="stage">
+  <div class="stage-head">
+    <span class="num">阶段 3</span>
+    <h2>伪装与隐私</h2>
+    <span class="note">默认 ~ 切换，失焦仅暂停音频</span>
+  </div>
+
+  <div class="screens">
+
+    <!-- S30 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S30</span>
+        <span class="screen-name">伪装 · 销售数据表</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">企业数据中台 · 销售分析</span></div>
+        <div class="frame-body" style="padding:0; background:#f2f4f7;">
+          <div style="height:36px; background:#2f6fd6; color:#fff; display:flex; align-items:center; padding:0 12px; font-size:11px; gap:8px;">
+            <span style="width:14px;height:14px;background:#fff;border-radius:2px;display:block;"></span>
+            <span>企业数据中台 · 销售分析</span>
+            <span style="margin-left:auto; font-size:10.5px; opacity:.9;">张伟 ｜ 退出</span>
+          </div>
+          <div style="display:flex; min-height:200px;">
+            <div style="width:110px; background:#fff; border-right:1px solid #e3e7ee; padding:8px 0; flex:none;">
+              <div style="padding:5px 12px; font-size:10.5px; color:#2f6fd6; background:#eef4ff; border-right:3px solid #2f6fd6; font-weight:600;">数据总览</div>
+              <div style="padding:5px 12px; font-size:10.5px; color:#5b6472;">订单明细</div>
+              <div style="padding:5px 12px; font-size:10.5px; color:#5b6472;">客户管理</div>
+              <div style="padding:5px 12px; font-size:10.5px; color:#5b6472;">回款跟踪</div>
+            </div>
+            <div style="flex:1; padding:10px; min-width:0;">
+              <div class="row" style="gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+                <span class="chip" style="font-size:10px;">2026 Q3</span>
+                <span class="chip" style="font-size:10px;">全部区域</span>
+                <span class="chip on" style="font-size:10px;">查询</span>
+              </div>
+              <table class="lofi">
+                <thead><tr><th>订单</th><th>客户</th><th>金额</th><th>状态</th></tr></thead>
+                <tbody>
+                  <tr><td>SO...001</td><td>云启科技</td><td>128,450</td><td>已回款</td></tr>
+                  <tr><td>SO...008</td><td>明远贸易</td><td>86,200</td><td>待回款</td></tr>
+                  <tr><td>SO...015</td><td>锐驰电子</td><td>342,800</td><td>已回款</td></tr>
+                  <tr><td>SO...022</td><td>天成物流</td><td>54,600</td><td>已逾期</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">按 ~ 或点击「▣ 工作界面」</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">再按一次返回播放器</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">再按 ~ → S20（从暂停处继续）</span></div>
+        <div class="line"><span class="k">语言</span><span class="v">伪装界面不随 UI 语言切换（保持中文，更真实）</span></div>
+      </div>
+    </div>
+
+    <!-- S31 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S31</span>
+        <span class="screen-name">伪装 · 代码编辑器</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame locked">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">Visual Studio Code · app.js</span></div>
+        <div class="frame-body" style="padding:0; background:#1e1e1e; color:#ccc;">
+          <div style="display:flex; min-height:180px; font-family:monospace; font-size:10.5px; opacity:.5;">
+            <div style="width:100px; background:#252526; padding:8px; border-right:1px solid #333;">
+              <div style="color:#888; margin-bottom:4px;">资源管理器</div>
+              <div style="color:#ccc;">📁 src</div>
+              <div style="color:#ccc; padding-left:10px;">📄 app.js</div>
+            </div>
+            <div style="flex:1; padding:10px; min-width:0;">
+              <div><span style="color:#666;">1</span> <span style="color:#569cd6;">function</span> <span style="color:#dcdcaa;">processData</span>(input) {</div>
+              <div><span style="color:#666;">2</span>   <span style="color:#569cd6;">const</span> result = input.<span style="color:#dcdcaa;">map</span>(x => x * 2);</div>
+              <div><span style="color:#666;">3</span> }</div>
+            </div>
+          </div>
+          <div style="padding:10px; text-align:center; background:#252526; color:#888; font-size:10.5px;">
+            🔒 即将推出 · P1 迭代一实现
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">设置中选择「代码编辑器」模板</span></div>
+        <div class="line"><span class="k">状态</span><span class="v">P1 迭代一实现 <span class="todo">预留</span></span></div>
+      </div>
+    </div>
+
+    <!-- S32 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S32</span>
+        <span class="screen-name">伪装 · 邮件列表</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame locked">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">Outlook · 收件箱</span></div>
+        <div class="frame-body" style="padding:0; background:#fff;">
+          <div style="height:36px; background:#0078d4; color:#fff; display:flex; align-items:center; padding:0 12px; font-size:11px; opacity:.5;">
+            <span>Outlook</span>
+            <span style="margin-left:auto;">搜索</span>
+          </div>
+          <div style="display:flex; min-height:160px; opacity:.5;">
+            <div style="width:90px; background:#f3f2f1; border-right:1px solid #e1dfdd; padding:8px; font-size:10.5px;">
+              <div style="color:#0078d4; font-weight:600; margin-bottom:4px;">收件箱</div>
+              <div style="color:#666;">已发送</div>
+            </div>
+            <div style="flex:1; font-size:10.5px;">
+              <div style="padding:8px 10px; border-bottom:1px solid #eaeaea;">
+                <div style="font-weight:600;">项目周报 · 第 37 周</div>
+                <div style="color:#888;">李静 · 10:24</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:10px; text-align:center; background:#f3f2f1; color:#888; font-size:10.5px;">
+            🔒 即将推出 · P1 迭代一实现
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">设置中选择「邮件列表」模板</span></div>
+        <div class="line"><span class="k">状态</span><span class="v">P1 迭代一实现 <span class="todo">预留</span></span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 阶段 4 · 设置 -->
+<!-- ============================================================ -->
+<div class="stage">
+  <div class="stage-head">
+    <span class="num">阶段 4</span>
+    <h2>设置</h2>
+    <span class="note">阅读、听书、伪装、显示、语言</span>
+  </div>
+
+  <div class="screens">
+
+    <!-- S60 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S60</span>
+        <span class="screen-name">设置面板</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 设置</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:10px;">
+            <div class="text-strong">通用设置</div>
+            <div class="row">
+              <span class="label" style="width:52px;">语言</span>
+              <div class="lang-toggle" style="flex:1;">
+                <span class="on">中文</span>
+                <span>English</span>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="text-strong">阅读设置</div>
+            <div class="row"><span class="label" style="width:52px;">字号</span><div class="progress" style="flex:1;"><i style="width:40%"></i></div><span class="text-xs" style="width:36px; text-align:right;">17px</span></div>
+            <div class="row"><span class="label" style="width:52px;">行距</span><div class="progress" style="flex:1;"><i style="width:50%"></i></div><span class="text-xs" style="width:36px; text-align:right;">1.85</span></div>
+            <div class="row"><span class="label" style="width:52px;">主题</span>
+              <div class="row" style="gap:5px; flex-wrap:wrap;">
+                <span class="chip on">日间</span>
+                <span class="chip">夜间</span>
+                <span class="chip">护眼</span>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="text-strong">听书设置</div>
+            <div class="row"><span class="label" style="width:52px;">语速</span><div class="progress" style="flex:1;"><i style="width:30%"></i></div><span class="text-xs" style="width:36px; text-align:right;">1.0x</span></div>
+            <div class="row"><span class="label" style="width:52px;">音色</span><div class="input-line" style="flex:1;">中文女声（系统）</div></div>
+            <div class="row"><span class="label" style="width:52px;">TTS 引擎</span><div class="input-line" style="flex:1;">Web Speech API</div></div>
+            <div class="box locked" style="font-size:10.5px; line-height:1.7;">
+              🔒 增强层：Kokoro / MOSS-TTS-Nano<br>
+              🔒 备选层：Edge TTS<br>
+              <span style="color:#aaa;">接口已预留，后续版本接入</span>
+            </div>
+
+            <div class="divider"></div>
+            <div class="text-strong">伪装设置</div>
+            <div class="row"><span class="label" style="width:52px;">模板</span><div class="input-line" style="flex:1;">销售数据表（默认）</div></div>
+            <div class="row"><span class="label" style="width:52px;">快捷键</span><div class="input-line" style="flex:1;">~</div><span class="btn sm">修改</span></div>
+            <div class="row"><span class="label" style="width:52px;">切换时暂停</span><span class="spacer"></span><div class="chip on" style="width:36px; text-align:center;">开</div></div>
+            <div class="row"><span class="label" style="width:52px;">失焦暂停</span><span class="spacer"></span><div class="chip on" style="width:36px; text-align:center;">开</div></div>
+
+            <div class="divider"></div>
+            <div class="text-strong">显示设置</div>
+            <div class="row"><span class="label" style="width:52px;">舒适模式</span><span class="spacer"></span><div class="chip" style="width:36px; text-align:center;">关</div></div>
+            <div class="row"><span class="label" style="width:52px;">输出设备提示</span><span class="spacer"></span><div class="chip on" style="width:36px; text-align:center;">开</div></div>
+
+            <div class="divider"></div>
+            <div class="btn solid block">完 成</div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">点击播放器工具栏 ⚙</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">调整设置即时生效；语言切换即时生效；修改快捷键</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">完成 → S20；修改 → S61</span></div>
+        <div class="line"><span class="k">新增</span><span class="v">通用设置中新增语言切换（中 / English）</span></div>
+      </div>
+    </div>
+
+    <!-- S61 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S61</span>
+        <span class="screen-name">伪装快捷键设置</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 快捷键</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; padding:8px 4px;">
+            <div class="text-strong">设置伪装快捷键</div>
+            <div class="text-xs">按下你想要使用的按键或组合键</div>
+            <div class="box dashed" style="text-align:center; padding:18px; font-size:16px; font-weight:700;">~</div>
+            <div class="text-xs" style="text-align:center;">当前：~（默认）</div>
+            <div class="box gray" style="font-size:10.5px; line-height:1.7;">
+              <b>建议：</b><br>
+              · 单键：~、F9、Insert<br>
+              · 组合键：Ctrl+Shift+H<br>
+              · 避免与浏览器快捷键冲突
+            </div>
+            <div class="row" style="gap:8px;">
+              <span class="btn block">恢复默认</span>
+              <span class="btn solid block">保存</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">设置中点击「修改」</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">按下新键检测冲突；保存 / 恢复默认</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">保存 → S60</span></div>
+        <div class="line"><span class="k">待确认</span><span class="v">冲突提示文案与处理 <span class="todo">待确认</span></span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 阶段 5 · 浏览器兼容性与异常 -->
+<!-- ============================================================ -->
+<div class="stage">
+  <div class="stage-head">
+    <span class="num">阶段 5</span>
+    <h2>浏览器兼容性与异常</h2>
+    <span class="note">特性检测、降级、不支持引导</span>
+  </div>
+
+  <div class="screens">
+
+    <!-- S80 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S80</span>
+        <span class="screen-name">兼容性详情</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 兼容性</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:8px;">
+            <div class="text-strong">浏览器支持矩阵</div>
+            <table class="lofi">
+              <thead><tr><th>浏览器</th><th>最低版本</th><th>支持</th></tr></thead>
+              <tbody>
+                <tr><td>Chrome</td><td>90+</td><td>✅ 完整</td></tr>
+                <tr><td>Edge</td><td>90+</td><td>✅ 完整</td></tr>
+                <tr><td>Firefox</td><td>113+</td><td>⚠ 有限</td></tr>
+                <tr><td>Safari</td><td>16.4+</td><td>⚠ 有限</td></tr>
+                <tr><td>iOS Safari</td><td>16.4+</td><td>⚠ 有限</td></tr>
+                <tr><td>Android Chrome</td><td>90+</td><td>✅ 完整</td></tr>
+                <tr><td>IE / 旧 Edge</td><td>—</td><td>❌ 不支持</td></tr>
+              </tbody>
+            </table>
+            <div class="box gray" style="font-size:10.5px; line-height:1.7;">
+              Firefox / Safari 限制：<br>
+              · EPUB 解析不可用（无 DecompressionStream）<br>
+              · TTS 音色较少，Safari 需手势触发
+            </div>
+            <div class="row" style="gap:8px;">
+              <span class="btn block">下载 Chrome</span>
+              <span class="btn block">下载 Edge</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">页脚链接或启动时检测到不支持</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">查看矩阵；下载按钮跳转</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">关闭 → 返回上一页</span></div>
+        <div class="line"><span class="k">语言</span><span class="v">此页根据 UI 语言显示中英双语</span></div>
+      </div>
+    </div>
+
+    <!-- S81 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S81</span>
+        <span class="screen-name">不支持浏览器 · 横幅</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app</span></div>
+        <div class="frame-body" style="padding:0;">
+          <div style="background:#f7f7f7; border-bottom:2px solid #222; padding:9px 12px; font-size:11.5px;">
+            <div class="row" style="gap:8px;">
+              <span>⚠ 当前浏览器可能无法完整使用部分功能</span>
+              <span class="spacer"></span>
+              <span class="chip" style="font-size:10px;">查看详情</span>
+              <span class="chip" style="font-size:10px;">✕</span>
+            </div>
+          </div>
+          <div style="padding:14px;">
+            <div class="col" style="gap:10px;">
+              <div class="text-strong">功能状态</div>
+              <div class="box gray" style="font-size:11px; line-height:1.9;">
+                <div class="row"><span>语音合成</span><span class="spacer"></span><span>可用</span></div>
+                <div class="row"><span>EPUB 解析</span><span class="spacer"></span><span style="color:#999;">不可用</span></div>
+                <div class="row"><span>本地存储</span><span class="spacer"></span><span>可用</span></div>
+              </div>
+              <div class="text-xs">建议使用 Chrome / Edge 90+ 获得完整功能</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">启动时特性检测缺失关键 API</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">查看详情 / 关闭</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">详情 → S80；关闭 → 继续使用</span></div>
+      </div>
+    </div>
+
+    <!-- S82 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S82</span>
+        <span class="screen-name">EPUB 不可用 · 置灰</span>
+        <span class="screen-tag p0">P0</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 导入</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px;">
+            <div class="text-strong">导入文档</div>
+            <div class="box dashed" style="text-align:center; padding:18px 12px;">
+              <div class="btn disabled">选择 EPUB 文件</div>
+              <div class="text-xs" style="margin-top:8px; color:#999;">当前浏览器不支持 EPUB 解析</div>
+              <div class="text-xs" style="color:#999;">请使用 Chrome / Edge，或转换为 TXT</div>
+            </div>
+            <div class="row" style="gap:8px;">
+              <span class="btn block">选择 TXT / MD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">Firefox &lt; 113 或 Safari &lt; 16.4</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">EPUB 置灰，仅可选 TXT / MD</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">选择 TXT / MD → S12</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 阶段 6 · 数据管理 -->
+<!-- ============================================================ -->
+<div class="stage">
+  <div class="stage-head">
+    <span class="num">阶段 6</span>
+    <h2>数据管理</h2>
+    <span class="note">清除数据需输入「删除」确认</span>
+  </div>
+
+  <div class="screens">
+
+    <!-- S90 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S90</span>
+        <span class="screen-name">清除所有数据确认</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 清除数据</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; padding:12px 6px;">
+            <div class="text-strong" style="text-align:center;">清除所有数据？</div>
+            <div class="text-sm" style="text-align:center;">
+              将删除所有文档、进度、设置和伪装图片。<br>
+              此操作不可恢复。
+            </div>
+            <div class="box alert" style="font-size:11px;">
+              ⚠ 数据仅存本地，清除后无法恢复。请确认已不再需要这些内容。
+            </div>
+            <div class="text-xs">请输入「删除」二字以确认：</div>
+            <div class="input-line">在此输入…</div>
+            <div class="row" style="gap:8px;">
+              <span class="btn block">取消</span>
+              <span class="btn solid block">确认清除</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">设置中点击「清除所有数据」</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">输入「删除」二字 → 确认清除；或取消</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">清除 → S00；取消 → 返回设置</span></div>
+        <div class="line"><span class="k">语言</span><span class="v">英文 UI 下确认文字改为「DELETE」</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 阶段 7 · 国际化（中英） -->
+<!-- ============================================================ -->
+<div class="stage">
+  <div class="stage-head">
+    <span class="num">阶段 7</span>
+    <h2>国际化（中英双语）</h2>
+    <span class="note">只做中文和英文，不做其他语言</span>
+  </div>
+
+  <div class="screens">
+
+    <!-- S100 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S100</span>
+        <span class="screen-name">语言切换</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · 设置</span></div>
+        <div class="frame-body">
+          <div class="col" style="gap:12px; padding:8px 4px;">
+            <div class="text-strong">语言</div>
+            <div class="text-xs">切换后界面文案即时生效，无需刷新</div>
+
+            <div class="box" style="padding:12px;">
+              <div class="row">
+                <div style="flex:1;">
+                  <div class="text-strong">中文</div>
+                  <div class="text-xs" style="margin-top:2px;">简体中文界面</div>
+                </div>
+                <span class="chip on">当前</span>
+              </div>
+            </div>
+
+            <div class="box" style="padding:12px;">
+              <div class="row">
+                <div style="flex:1;">
+                  <div class="text-strong">English</div>
+                  <div class="text-xs" style="margin-top:2px;">English interface</div>
+                </div>
+                <span class="btn sm">切换</span>
+              </div>
+            </div>
+
+            <div class="box gray" style="font-size:10.5px; line-height:1.7;">
+              <b>语言范围：</b><br>
+              · UI 文案：中文 + 英文<br>
+              · 章节正则：`第X章` + `Chapter X`<br>
+              · 编码检测：UTF-8 / GBK / Latin-1<br>
+              · TTS 音色：中文音色 + 英文音色<br>
+              <span style="color:#999;">不做日、韩、俄、阿拉伯语等其他语言</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">设置中「通用设置」→「语言」</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">选择中文 / English，即时生效</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">返回设置，继续使用</span></div>
+        <div class="line"><span class="k">优先级</span><span class="v">localStorage.lang > 浏览器语言 > 默认中文</span></div>
+      </div>
+    </div>
+
+    <!-- S101 -->
+    <div class="screen">
+      <div class="screen-head">
+        <span class="screen-id">S101</span>
+        <span class="screen-name">英文文档 · 章节识别</span>
+        <span class="screen-tag p1">P1</span>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">listencover.app · Chapters</span></div>
+        <div class="frame-body" style="padding:0;">
+          <div class="row" style="padding:9px 12px; border-bottom:1.5px solid #222; background:#fafafa;">
+            <span class="text-strong" style="font-size:12px;">Playlist</span>
+            <span class="spacer"></span>
+            <span class="btn sm">✕</span>
+          </div>
+          <div style="max-height:260px; overflow-y:auto;">
+            <div style="padding:9px 12px; border-bottom:1px solid #eee; background:#f0f0f0; display:flex; gap:8px; font-size:11.5px;">
+              <span style="color:#888;">01</span>
+              <span style="font-weight:600;">Prologue</span>
+              <span style="margin-left:auto; color:#888;">12:30</span>
+            </div>
+            <div style="padding:9px 12px; border-bottom:1px solid #eee; display:flex; gap:8px; font-size:11.5px;">
+              <span style="color:#888;">02</span>
+              <span>Chapter 1</span>
+              <span style="margin-left:auto; color:#888;">15:20</span>
+            </div>
+            <div style="padding:9px 12px; border-bottom:1px solid #eee; display:flex; gap:8px; font-size:11.5px;">
+              <span style="color:#888;">03</span>
+              <span>Chapter 2</span>
+              <span style="margin-left:auto; color:#888;">10:45</span>
+            </div>
+            <div style="padding:9px 12px; border-bottom:1px solid #eee; display:flex; gap:8px; font-size:11.5px;">
+              <span style="color:#888;">04</span>
+              <span>Epilogue</span>
+              <span style="margin-left:auto; color:#888;">08:50</span>
+            </div>
+          </div>
+          <div class="row" style="padding:7px 12px; border-top:1.5px solid #222; background:#fafafa; font-size:10.5px; color:#666;">
+            <span>4 chapters · total 47:25</span>
+          </div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="line"><span class="k">位置</span><span class="v">英文文档解析完成后，点击 ☰ 打开播放列表</span></div>
+        <div class="line"><span class="k">操作</span><span class="v">点击章节跳转；✕ 关闭</span></div>
+        <div class="line"><span class="k">下一步</span><span class="v">均返回 S20-EN</span></div>
+        <div class="line"><span class="k">正则</span><span class="v">支持 `Chapter X`、`Prologue`、`Epilogue`、`Part X` 等</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 结尾说明 -->
+<!-- ============================================================ -->
+<div class="stage">
+  <div class="stage-head">
+    <span class="num">说明</span>
+    <h2>低保真原型使用说明</h2>
+  </div>
+  <div class="box" style="font-size:12.5px; line-height:1.9;">
+    <p style="margin-bottom:8px;">
+      <b>覆盖范围：</b>本原型覆盖 PRD v5.1 中 M1–M11 全部核心模块，按产品流程与逻辑平铺：
+      首次打开 → 导入 → 播放 → 伪装 → 设置 → 兼容性 → 数据管理 → 国际化。
+    </p>
+    <p style="margin-bottom:8px;">
+      <b>国际化范围（本版本重点）：</b>
+      只做<strong>中文 + 英文</strong>。涵盖 UI 文案、章节正则、编码检测、TTS 音色匹配四项。
+      不做日、韩、俄、阿拉伯语等其他语言，不做 RTL，不做伪装模板本地化。
+    </p>
+    <p style="margin-bottom:8px;">
+      <b>TTS 三层策略：</b>
+      <b>保底层 Web Speech API</b>——已实现，当前唯一可用引擎。
+      增强层 Kokoro / MOSS-TTS-Nano 和备选层 Edge TTS——仅留接口，UI 显示为「即将推出」锁定。
+    </p>
+    <p style="margin-bottom:8px;">
+      <b>已覆盖的异常与边界状态：</b>
+      空状态、首次引导、加载中、解析失败、删除确认、编码选择、
+      无输出设备、TTS 不可用、不支持浏览器横幅、EPUB 置灰、清除数据确认。
+    </p>
+    <p style="margin-bottom:8px;">
+      <b>标注为「待确认」的位置：</b>
+      取消解析后数据回滚、快捷键冲突处理文案。
+    </p>
+    <p>
+      <b>未包含：</b>正式视觉设计、动效、具体颜色、字体、图标细节、真实数据。
+      所有灰色块均为内容占位。已砍掉跨设备同步、WebDAV、导出/导入、二维码接续。
+      增强层和备选层 TTS 的具体实现不在当前范围内。
+    </p>
+  </div>
+</div>
+
+</body>
+</html>
