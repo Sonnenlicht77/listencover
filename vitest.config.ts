@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath, URL } from 'node:url';
 
@@ -9,8 +9,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  build: {
-    target: 'es2020',
-    sourcemap: false,
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    include: ['tests/unit/**/*.spec.ts'],
+    exclude: ['node_modules', 'dist', 'tests/e2e'],
   },
 });
