@@ -1,25 +1,31 @@
 # AGENTS.md
 
 ## 项目概述
+
 listenCover — 纯网页端本地听书工具。单设备、零配置、本地优先。
 用户上传本地文档（TXT/MD/EPUB等），通过 TTS 朗读，界面伪装成音频播放器。
 所有数据存储在浏览器本地，不上传服务器。
 
 仓库：https://github.com/Sonnenlicht77/listencover
+开发环境：项目位于 macOS 外接卷 /Volumes/web，pnpm store 为项目本地 .pnpm-store（见 .npmrc）
 
 ## 技术栈
-- 框架: Vue 3 (Composition API + `<script setup>`) + TypeScript
-- 构建: Vite 6
-- 包管理: pnpm
+
+- 框架: Vue 3.5 (Composition API + `<script setup>`) + TypeScript 6
+- 构建: Vite 8
+- 包管理: pnpm（禁止使用 npm / yarn；禁止删除 pnpm-lock.yaml）
+- 代码检查: ESLint 10 (Flat Config) + Prettier 3
+- 提交规范: Commitlint + simple-git-hooks
 - 状态: `reactive` 模块级 store，不引入 Pinia
 - 路由: 无 (单页应用，用 `v-if` 切换视图)
-- 国际化: vue-i18n，仅中英双语 (zh-CN / en)
+- 国际化: vue-i18n，仅中英双语 (zh-CN / en)，不新增其他语言
 - 存储: IndexedDB (idb) + localStorage
 - TTS: 保底层 Web Speech API，增强层仅留接口骨架
-- 测试: Vitest (单元) + Playwright (E2E)
+- 测试: Vitest 5 (单元) + Playwright 1.63 (E2E)
 - 部署: Cloudflare Pages
 
 ## 目录结构
+
 - `src/views/` — 页面级组件 (PlayerView, ShelfView, SettingsView)
 - `src/components/` — 通用组件，按 `base` / `player` / `shelf` / `disguise` 分组
 - `src/composables/` — 有状态逻辑，`use` 前缀 (如 `useTTS.ts`)
@@ -31,6 +37,7 @@ listenCover — 纯网页端本地听书工具。单设备、零配置、本地�
 - `src/utils/` — 纯函数工具
 
 ## 核心规则 (必须遵守)
+
 1. **组件规范**: 必须使用 `<script setup lang="ts">`，禁止 Options API。
 2. **组件长度**: 单个组件超过 250 行，必须拆分或提取为 Composable。
 3. **国际化 (i18n)**: 所有用户可见文案必须走 `$t('key')`，禁止硬编码中文或英文。
@@ -41,8 +48,13 @@ listenCover — 纯网页端本地听书工具。单设备、零配置、本地�
 8. **提交信息**: 使用 Conventional Commits，中文描述，如 `feat(player): 添加进度保存`。
 9. **语言文件**: 新增文案 key 必须同时更新 `zh-CN.json` 和 `en.json`。
 10. **伪装模板**: 组件放 `src/components/disguise/`，模板内不出现任何小说文字。
+11. **文件限制**: TXT/MD 硬上限 10MB，EPUB 硬上限 30MB，段落数上限 5 万段。
+12. **不做同步**: 禁止实现任何跨设备同步、WebDAV、导出/导入进度的功能。
+13. **TTS 引擎层级**: 保底层 Web Speech API 必须可用；增强层和备选层只留接口骨架，不实现具体逻辑。
+14. **可访问性**: 所有可交互元素必须有 aria-label 或语义化文本；键盘可完成核心操作；对比度 ≥ 4.5:1。
 
 ## 命名约定
+
 - 组件文件: PascalCase (如 `PlayerView.vue`)
 - Composable: `use` 前缀 + camelCase (如 `useTTS.ts`)
 - 工具函数: camelCase (如 `encoding.ts`)
@@ -50,6 +62,7 @@ listenCover — 纯网页端本地听书工具。单设备、零配置、本地�
 - 常量: UPPER_SNAKE_CASE
 
 ## 常用命令
+
 - `pnpm dev` — 启动开发服务器
 - `pnpm build` — 构建生产版本 (含类型检查)
 - `pnpm test` — 运行单元测试
@@ -59,6 +72,7 @@ listenCover — 纯网页端本地听书工具。单设备、零配置、本地�
 - `pnpm type-check` — 类型检查
 
 ## 代码风格
+
 - 缩进: 2 空格
 - 引号: 单引号
 - 分号: 保留
@@ -66,6 +80,9 @@ listenCover — 纯网页端本地听书工具。单设备、零配置、本地�
 - 尾随逗号: ES5
 
 ## 参考文档
+
 - 产品需求: `docs/PRD.md`
-- 架构设计: `docs/ARCHITECTURE.md`
+- 架构设计: `docs/ARCHITECTURE.md`（编写中，以 AGENTS.md 为准）
 - 贡献指南: `docs/CONTRIBUTING.md`
+- 低保真原型: `docs/低保真原型图.html`
+- 产品决策记录: `docs/提示.md`
