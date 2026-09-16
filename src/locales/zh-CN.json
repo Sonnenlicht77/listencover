@@ -117,7 +117,8 @@
     "close": "关闭",
     "back": "返回",
     "done": "完成",
-    "loading": "加载中…"
+    "loading": "加载中…",
+    "error": "出错"
   },
   "keyboard": {
     "space": "空格",
