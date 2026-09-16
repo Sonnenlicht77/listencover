@@ -4,9 +4,13 @@ import { useI18n } from 'vue-i18n';
 import { playerStore } from '@/stores/playerStore';
 import { settingsStore } from '@/stores/settingsStore';
 import { useKeyboard } from '@/composables/useKeyboard';
+import { useDisguise } from '@/composables/useDisguise';
+
 import PlayButton from '@/components/player/PlayButton.vue';
 import ProgressBar from '@/components/player/ProgressBar.vue';
 import TrackInfo from '@/components/player/TrackInfo.vue';
+import SalesTable from '@/components/disguise/SalesTable.vue';
+import DisguiseButton from '@/components/disguise/DisguiseButton.vue';
 
 const emit = defineEmits<{
   /** 返回文档列表 */
@@ -14,6 +18,8 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+const disguise = useDisguise();
 
 /** 工具栏是否可见（播放中无操作时自动隐藏） */
 const toolbarVisible = ref(true);
@@ -42,7 +48,7 @@ function resetIdleTimer() {
   if (idleTimer !== null) clearTimeout(idleTimer);
 
   // 只有播放中才自动隐藏
-  if (isPlaying.value) {
+  if (isPlaying.value && !disguise.active.value) {
     idleTimer = window.setTimeout(() => {
       toolbarVisible.value = false;
     }, 3500);
@@ -53,13 +59,21 @@ function onUserActivity() {
   resetIdleTimer();
 }
 
-/* ========== 键盘快捷键 ========== */
+/* ========== 播放器快捷键 ========== */
 
 useKeyboard({
-  toggle: () => void playerStore.toggle(),
-  prev: () => void playerStore.prev(),
-  next: () => void playerStore.next(),
-  openShelf: () => emit('openShelf'),
+  toggle: () => {
+    if (!disguise.active.value) void playerStore.toggle();
+  },
+  prev: () => {
+    if (!disguise.active.value) void playerStore.prev();
+  },
+  next: () => {
+    if (!disguise.active.value) void playerStore.next();
+  },
+  openShelf: () => {
+    if (!disguise.active.value) emit('openShelf');
+  },
 });
 
 /* ========== 生命周期 ========== */
@@ -67,13 +81,18 @@ useKeyboard({
 onMounted(() => {
   const events: (keyof DocumentEventMap)[] = ['mousemove', 'mousedown', 'keydown', 'touchstart'];
   events.forEach((ev) => document.addEventListener(ev, onUserActivity, { passive: true }));
+
   resetIdleTimer();
 });
 
 onUnmounted(() => {
   const events: (keyof DocumentEventMap)[] = ['mousemove', 'mousedown', 'keydown', 'touchstart'];
   events.forEach((ev) => document.removeEventListener(ev, onUserActivity));
+
   if (idleTimer !== null) clearTimeout(idleTimer);
+
+  // 离开播放器时强制解除伪装，避免卡在伪装界面
+  void disguise.hide();
 });
 
 /* ========== 交互 ========== */
@@ -102,13 +121,25 @@ function handleImport() {
   // 阶段 6 暂不实现，通过返回列表再上传
   emit('openShelf');
 }
+
+/* ========== 伪装交互 ========== */
+
+function handleEnterDisguise() {
+  void disguise.show();
+  resetIdleTimer();
+}
+
+function handleExitDisguise() {
+  void disguise.hide();
+  resetIdleTimer();
+}
 </script>
 
 <template>
   <div class="player-page">
     <!-- 顶部工具栏 -->
     <Transition name="toolbar">
-      <header v-show="toolbarVisible" class="toolbar">
+      <header v-show="toolbarVisible && !disguise.active.value" class="toolbar">
         <button
           class="icon-btn"
           :title="t('shelf.title')"
@@ -126,9 +157,6 @@ function handleImport() {
           📂
         </button>
         <span class="spacer"></span>
-        <button class="icon-btn boss-btn" title="工作界面（阶段 7）" aria-label="工作界面" disabled>
-          ▣
-        </button>
       </header>
     </Transition>
 
@@ -197,7 +225,7 @@ function handleImport() {
 
     <!-- 底部状态栏 -->
     <Transition name="statusbar">
-      <footer v-show="toolbarVisible" class="statusbar">
+      <footer v-show="toolbarVisible && !disguise.active.value" class="statusbar">
         <span>{{ statusText }}</span>
         <div class="progress-mini">
           <i :style="{ width: playerStore.progressPct + '%' }"></i>
@@ -205,9 +233,14 @@ function handleImport() {
         <span>{{ Math.round(playerStore.progressPct) }}%</span>
       </footer>
     </Transition>
+
+    <!-- 浮动伪装按钮：仅在非伪装状态显示 -->
+    <DisguiseButton v-if="!disguise.active.value" @toggle="handleEnterDisguise" />
+
+    <!-- 伪装界面：点击品牌区域返回 -->
+    <SalesTable v-if="disguise.active.value" @back="handleExitDisguise" />
   </div>
 </template>
-
 <style scoped>
 .player-page {
   display: flex;
