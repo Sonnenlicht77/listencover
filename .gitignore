@@ -41,3 +41,7 @@ test-results/
 .vite/
 .cache/
 
+/docs/项目架构.md
+/docs/test.md
+
+
